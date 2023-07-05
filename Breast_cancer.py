@@ -4,7 +4,19 @@ import streamlit as st
 import matplotlib.pyplot as plt  
 import seaborn as sns
 from streamlit_option_menu import option_menu
+from sklearn.preprocessing import StandardScaler
+import warnings
+warnings.filterwarnings('ignore')
+
 Breast_cancer_model = pickle.load(open('Breast_cancer_model.sav',"rb"))
+
+scaler = StandardScaler()
+
+# reading csv file as the pandas dataframe
+data = pd.read_csv("cancer.csv")
+X1 = data.drop(['id','Unnamed: 32','area_worst','radius_worst','area_mean','radius_mean','perimeter_worst','perimeter_mean','fractal_dimension_mean','fractal_dimension_worst','smoothness_mean','smoothness_worst','diagnosis'], axis=1)
+# features are removed using vif
+X_scaled = scaler.fit_transform(X1)
 
 # setting page title
 st.set_page_config(page_title='Breast Cancer Prediction',layout="wide")
@@ -14,7 +26,7 @@ with st.sidebar:
   
 if (selected == "Breast Cancer Prediction"):
     st.title("Breast Cancer Prediction using MACHIENE LEARNING")
-    col1, col2,col3,col4,col5 = st.columns(5)
+    col1,col2,col3,col4,col5 = st.columns((1,1,1,1,1))
     with col1:
         radius_mean = st.text_input('radius mean')
     with col2:
@@ -76,17 +88,21 @@ if (selected == "Breast Cancer Prediction"):
     with col5:
         fractal_dimension_worst = st.text_input('fractal_dimension_worst')
    
+    
+    
+    
+    
     Breast_Cancer_diagnosis = ''
     if st.button('Breast Cancer Test Result'):
-        Breast_Cancer_prediction = Breast_cancer_model.predict([[texture_mean, compactness_mean, concavity_mean,
-                                                                 concave_points_mean, symmetry_mean, radius_se, texture_se,
-                                                                 perimeter_se, area_se, smoothness_se, compactness_se,
-                                                                 concavity_se, concave_points_se, symmetry_se,
-                                                                 fractal_dimension_se, texture_worst, compactness_worst,
-                                                                 concavity_worst, concave_points_worst, symmetry_worst]])
+        X_scaled = scaler.transform([[float(texture_mean),float(compactness_mean),float(concavity_mean),float(concave_points_mean),
+                   float(symmetry_mean), float(radius_se), float(texture_se),float(perimeter_se), float(area_se),
+                   float(smoothness_se), float(compactness_se),float(concavity_se), float(concave_points_se), 
+                   float(symmetry_se),float(fractal_dimension_se), float(texture_worst), float(compactness_worst),
+                   float(concavity_worst), float(concave_points_worst),float(symmetry_worst)]])
+        Breast_Cancer_prediction = Breast_cancer_model.predict(X_scaled)
         if (Breast_Cancer_prediction[0] == 0):
             Breast_Cancer_diagnosis = 'THE PERSON CELL IS  BENIGN IS NOT HARMFUL'
-        else:
+        elif (Breast_Cancer_prediction[0] == 1):
             Breast_Cancer_diagnosis = 'THE PERSON CELL IS MALIGNANT IS HARMFUL'
     st.success(Breast_Cancer_diagnosis)  
 
@@ -95,8 +111,7 @@ def heatmap(df):
     sns.heatmap(df, fmt='.1f',annot=True,cbar=True)
     
 if (selected == 'INSIGHTS'): 
-    # reading csv file as the pandas dataframe
-    data = pd.read_csv("cancer.csv")    
+        
     Data_mean = data.groupby('diagnosis').mean()
     st.write("We can clearly see that for most of the features, the mean values are higher for Malignant(1) cases and lower for Benign(0) cases")
     st.dataframe(Data_mean)
