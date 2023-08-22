@@ -1,3 +1,5 @@
 streamlit
 scikit-learn
 matplotlib
+seaborn
+streamlit_option_menu
